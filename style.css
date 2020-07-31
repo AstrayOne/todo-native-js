@@ -57,7 +57,7 @@ input::placeholder {
 .todo-item {
   position: relative;
   width: 490px;
-  height: 58px;
+  min-height: 58px;
   padding-left: 60px;
   line-height: 58px;
   font-size: 24px;
@@ -69,14 +69,20 @@ input::placeholder {
 
 .todo-item__check {
   position: absolute;
-  top: 5px;
+  top: 0px; 
+  bottom: 0px;
+  margin: auto 0;
   left: 0px;
   width: 40px;
   height: 40px;
   opacity: 0;
 }
 
-.select-all__checkbox {
+.todo-item__check_edited {
+  display: none;
+}
+
+/* .select-all__checkbox {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -84,7 +90,7 @@ input::placeholder {
   height: 64px;
   font-size: 20px;
   opacity: 0;
-}
+} */
 
 .todo-item_done {
   background-image: url("img/cheked.svg");
@@ -94,9 +100,11 @@ input::placeholder {
 .todo-item__close {
   position: absolute;
   right: 10px;
-  top: 10px;
+  top: 0px;
+  bottom: 0px;
   width: 20px;
   height: 40px;
+  margin: auto 0;
   color: rgba(175, 47, 47, 1);
   font-size: 30px;
   opacity: 0;
@@ -113,7 +121,8 @@ input::placeholder {
 .todo-item__close::after {
   position: absolute;
   content: '×';
-  top: -10px;
+  line-height: 40px;
+  top: 0px;
 }
 
 .select-all {
@@ -160,7 +169,7 @@ input::placeholder {
 }
 
 @font-face  {
-  font-family:"Helvtica-Neue";
+  font-family: "Helvtica-Neue";
   src: url("../fonts/Helvtica-Neue-Medium") format("truetype");
   font-style: normal; 
   font-weight: normal; 
@@ -186,9 +195,9 @@ input::placeholder {
   border-color: rgba(175, 47, 47, 0.2);
 }
 
-.todo-item_nodisplay {
+/* .todo-item_nodisplay {
   display: none;
-}
+} */
 
 .button_all {
   width: 15px;
@@ -206,7 +215,7 @@ input::placeholder {
 }
 
 .button_clear-сompleted {
-  display: none;
+  display: block;
   width: 110px;
   left: 420px;
   border: none;
@@ -219,20 +228,12 @@ input::placeholder {
   text-decoration: underline;
 }
 
-.button_all__checkbox {
-  display: none;
-}
-
-.button_active__checkbox {
-  display: none;
-}
-
-.button_completed__checkbox {
-  display: none;
-}
-
 .todo-item__label {
   display: block;
+  width: 450px;
+  padding: 15px 0px;
+  line-height: 1.2;
+  word-break: break-all;
 }
 
 .todo-item__label_done {
@@ -242,6 +243,7 @@ input::placeholder {
 .todo-item__input {
   display: block;
   width: 436px;
+  width: 484px;
   height: 52px;
   font-size: 24px;
 }
@@ -254,11 +256,11 @@ input::placeholder {
   display: none;
 }
 
-.todo-item_editd {
+.todo-item_edited {
   background: none;
 }
 
-.hide_footer {
+.footer_visible {
   display: block;
 }
 

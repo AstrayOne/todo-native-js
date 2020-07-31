@@ -1,280 +1,613 @@
-let input = document.querySelector('.js-new-todo');
-let list = document.querySelector('.js-todo-list');
-let items = list.children;
-let checkSelectAll = document.querySelector('.js-select-all__checkbox');
-let selectAll = document.querySelector('.js-select-all');
+var todoController = (function() {
 
-let counter = document.querySelector('.js-counter');
-let footer = document.querySelector('.js-footer');
-let clearCompleted = document.querySelector('.js-button_clear-сompleted');
-clearCompleted.addEventListener('click', () => clearCompletedButtonHandler());
+    var Todo = function(id, isActive, text) {
+        this.id = id;
+        this.isActive = isActive;
+        this.text = text;
+    };
 
+    var data = {
+      allTodoItems: [],
+      selectAll: false
+    };
 
-selectAll.addEventListener('click', () => selectAllButtonHandler(selectAll));
-document.addEventListener('keydown', handleKey);
+    var SaveData = function() {
+      localStorage.clear();
+      for (var i = 0; i < data.allTodoItems.length; i++) {
+        localStorage[i]= JSON.stringify(data.allTodoItems[i]);
+      }
+    };
 
-let buttonAll = document.querySelector('.js-button_all');
-let buttonActive = document.querySelector('.js-button_active');
-let buttonCompleted = document.querySelector('.js-button_completed');
+    return {
+      LoadData: function() {
+        var item;
+        for (var i = 0; i < localStorage.length; i++) {
+          item = JSON.parse(localStorage[i]);
+          newItem = new Todo( item.id,  item.isActive,  item.text);
+        
+          data.allTodoItems.push(newItem);
+        }
+      },
 
-buttonAll.addEventListener('click', () => buttonAllHandler(buttonAll));
-buttonActive.addEventListener('click', () => buttonActiveHandler(buttonActive));
-buttonCompleted.addEventListener('click', () => buttonCompletedHandler(buttonCompleted));
+      changeText: function(id, text) {
+        var ids, index;
 
-let buttonAllCheckbox = document.querySelector('.js-button_all__checkbox');
-let buttonActiveCheckbox = document.querySelector('.js-button_active__checkbox');
-let buttonCompletedCheckbox = document.querySelector('.js-button_completed__checkbox');
+        ids = data.allTodoItems.map(function(current) {
+          return current.id;
+        });
+        
+        index = ids.indexOf(id);
+        data.allTodoItems[index].text = text;
 
-buttonAll.checked = true;
-buttonAll.classList.add('button_selected');
+        SaveData();
+      },
 
-function selectAllButtonHandler(selectAll) {
-  //items = list.children;
-  checks = document.querySelectorAll('.todo-item__check');
-  
-  if (checkSelectAll.checked) {
-    selectAll.classList.remove('select-all_checked');
-    for(let i = 0; i < items.length; i++)
-    {
-      items[i].classList.add('todo-item_active');
-      items[i].classList.remove('todo-item_done');
+      getItem: function(id) {
+        var index;
 
-      let label = items[i].querySelector('.todo-item__label');
-      label.classList.remove('todo-item__label_done');
+        ids = data.allTodoItems.map(function(current) {
+          return current.id;
+        });
+
+        index = ids.indexOf(id);
+
+        return data.allTodoItems[index];
+      },
+
+      selectCompletedTodos: function() {
+        var selectActiveTodos = [];
+
+        for (var i = 0; i < data.allTodoItems.length; i++) {
+          if (data.allTodoItems[i].isActive === false) {
+            selectActiveTodos.push(data.allTodoItems[i]);
+          }
+        }
+        return selectActiveTodos;
+      },
+
+      selectAllTodos: function() {
+        return data.allTodoItems;
+      },
+
+      selectActiveTodos: function() {
+        var selectActiveTodos = [];
+        for (var i = 0; i < data.allTodoItems.length; i++) {
+          if (data.allTodoItems[i].isActive === true) {
+            selectActiveTodos.push(data.allTodoItems[i]);
+          }
+        }
+        return selectActiveTodos;
+      },
+
+      isEmpty: function() {
+        if (data.allTodoItems.length === 0) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      },
       
-      checks[i].checked = false;
+      addItem: function(text) {
+        var newItem, ID, isActive;
+        if (data.allTodoItems.length > 0) {
+          ID = data.allTodoItems[data.allTodoItems.length - 1].id + 1;
+        }
+        else {
+          ID = 0;
+        }
+
+        isActive = true;
+        newItem = new Todo(ID, isActive, text);
+        
+        data.allTodoItems.push(newItem);
+        
+        SaveData();
+        return newItem;
+      },
+
+      deleteItem: function(id) {
+        var index;
+
+        ids = data.allTodoItems.map(function(current) {
+          return current.id;
+        });
+
+        index = ids.indexOf(id);
+        data.allTodoItems.splice(index, 1);
+
+        SaveData();
+      },
+
+      changeState: function(id) {
+        var index;
+
+        ids = data.allTodoItems.map(function(current) {
+          return current.id;
+        });
+
+        index = ids.indexOf(id);
+
+        if (data.allTodoItems[index].isActive === true)
+        {
+          data.allTodoItems[index].isActive = false;
+        }
+        else{
+          data.allTodoItems[index].isActive = true;
+        }
+
+        SaveData();
+      },
+
+      checkSelectAll: function() {
+        for (var i = 0; i < data.allTodoItems.length; i++) {
+          if (data.allTodoItems[i].isActive === true) {
+            data.selectAll = false;
+            return data.selectAll;
+          }
+        }
+        data.selectAll = true;
+        return data.selectAll;
+      },
+
+      selectAll: function() {
+        if (data.selectAll === false) {
+          for (var i = 0; i < data.allTodoItems.length; i++) {
+            data.allTodoItems[i].isActive = false;
+          }
+          data.selectAll = true;
+        }
+        else {
+          for (var i = 0; i < data.allTodoItems.length; i++) {
+            data.allTodoItems[i].isActive = true;
+          }
+          data.selectAll = false;
+        }
+
+        SaveData();
+        return data.selectAll;
+      },
+
+      changeSelectAll: function() {
+        if (data.selectAll === true) {
+          data.selectAll = false;
+        }
+      },
+
+      updateCounter: function() {
+        return this.selectActiveTodos().length;
+      }
     }
-    checkSelectAll.checked = false;
+})();
 
-  }
-  else {
-    selectAll.classList.add('select-all_checked');
-    for(let i = 0; i < items.length; i++)
-    {
-      items[i].classList.remove('todo-item_active');
-      items[i].classList.add('todo-item_done');
+var todoUIController = (function() {
 
-      let label = items[i].querySelector('.todo-item__label');
-      label.classList.add('todo-item__label_done');
+  var DOMtodo =  {
+    todoInput: '.js-new-todo',
+    todoList: '.js-todo-list',
+    selectAll: '.js-select-all',
+    counter: '.js-counter',
+    footer: '.js-footer',
+    clearCompleted: '.js-button_clear-сompleted',
+    todoItem: 'todo-item',
+    todoItemClose: 'js-todo-item__close',
+    todoItemLabel: 'js-todo-item__label',
+    todoItemCheck: 'js-todo-item__check',
+    todoItemDone: 'todo-item_done',
+    todoItemInput: 'todo-item__input',
+    todoItemLabelDone: 'todo-item__label_done',
+    buttonAll: '.js-button_all',
+    buttonActive: '.js-button_active',
+    buttonCompleted: '.js-button_completed',
+    buttonClearCompleted: '.js-button_clear-сompleted',
+    footerVisible: 'footer_visible',
+    buttonSelected: 'button_selected',
+    selectAllVisible: 'select-all_visible',
+    selectAllChecked: 'select-all_checked',
+    todoItemLabelEdited: 'todo-item__label_edited',
+    todoItemCheckEdited: 'todo-item__check_edited',
+    todoItemCloseEdited: 'todo-item__close_edited',
+    todoItemEdited: 'todo-item_edited'
+  };
 
-      checks[i].checked = true;
-    }
-    checkSelectAll.checked = true;
-  }
+  return {
+    getDOM: function() {
+      return DOMtodo;
+    },
 
-  refreshCounter();
-}
+    getInput: function() {
+      return {
+        text: document.querySelector(DOMtodo.todoInput).value
+      };
+    },
 
-function clearCompletedButtonHandler() {
-  allDoneItems = document.querySelectorAll('.todo-item_done');
-  
-  for (let i = 0; i < allDoneItems.length; i++) {
-    allDoneItems[i].remove();
-  }
-}
+    addListItem: function(obj) {
+      var element, html, newHtml;
 
-function closeButtonHandler(item) {
-  item.remove();
+      element = DOMtodo.todoList;
 
-  refreshCounter();
-}
+      if (obj.isActive === true) {
+        html = '<li class="todo-item" id="todo-%id%">\
+        <div class="todo-item__check js-todo-item__check"></div>\
+        <label class="todo-item__label js-todo-item__label">%text%</label>\
+        <div class="todo-item__close js-todo-item__close"></div></li>';
+      }
+      else {
+        html = '<li class="todo-item todo-item_done" id="todo-%id%">\
+        <div class="todo-item__check js-todo-item__check"></div>\
+        <label class="todo-item__label js-todo-item__label todo-item__label_done">%text%</label>\
+        <div class="todo-item__close js-todo-item__close"></div></li>';
+      }
 
-function checkButtonHandler(checkButton, item) {
-  let label = item.querySelector('.todo-item__label');
-  
-  if (!checkButton.checked) {
-    item.classList.remove('todo-item_done');
-    item.classList.add('todo-item_active');
-    label.classList.remove('todo-item__label_done');
-  }
+      newHtml = html.replace('%id%', obj.id);
+      newHtml = newHtml.replace('%text%', obj.text);
+      document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
+    },
 
-  else {
-    item.classList.add('todo-item_done');
-    item.classList.remove('todo-item_active');
-    label.classList.add('todo-item__label_done');
-  }
+    deleteListItem: function(itemID) {
+      var element = document.getElementById(itemID);
 
-  refreshCounter();
-}
+      element.parentNode.removeChild(element);
+    },
 
-function handleMouseOver(item) {
-  let closeItem = item.querySelector('.todo-item__close');
-  closeItem.classList.add('todo-item__close_visible');
-}
+    clearInput: function() {
+      document.querySelector(DOMtodo.todoInput).value = "";
+    },
 
-function handleMouseOut(item) {
-  let closeItem = item.querySelector('.todo-item__close');
-  closeItem.classList.remove('todo-item__close_visible');
-}
+    changeState: function(itemID) {
+      var todoItem, todoItemLabel;
 
-function addCheckHandler(item) {
-  item.addEventListener('mouseover', () => handleMouseOver(item));
-  item.addEventListener('mouseout', () => handleMouseOut(item));
-
-  let label = item.querySelector('.todo-item__label');
-  label.addEventListener('dblclick', () => editTask(label, item));
-
-  let closeButton = item.querySelector('.todo-item__close');
-  closeButton.addEventListener('click', () => closeButtonHandler(item));
-
-  let checkButton = item.querySelector('.todo-item__check');
- 
-  checkButton.addEventListener('click', () => checkButtonHandler(checkButton, item));
-
-  refreshCounter();
-}
-
-function editTask(label, item) {
-  label.classList.add('todo-item__label_edited');
-
-  item.classList.add('todo-item_editd');
-
-  closeElement = item.querySelector('.todo-item__close');
-  closeElement.classList.add('todo-item__close_edited');
-
-  let edit = document.createElement('input');
-  edit.type = 'text';
-  edit.classList.add('todo-item__input');
-  item.appendChild(edit);
-  edit.value = label.innerHTML;
-  edit.focus();
-  window.addEventListener('click', () => clickHandler( item, edit));
-  window.addEventListener('keydown', () => buttonHandler( item, edit));
-}
-
-function buttonHandler(item, edit) {
-  if((event.keyCode == 13) && (document.activeElement == edit)){
-    refreshString(item, edit)
-  }
-}
-
-function refreshString(item, edit) {
-  label = item.querySelector('.todo-item__label');
-  label.classList.remove('todo-item__label_edited');
-  item.querySelector('.todo-item_done');
-  item.classList.remove('todo-item_editd');
-  closeElement = item.querySelector('.todo-item__close');
-  closeElement.classList.remove('todo-item__close_edited');
-  edit.remove();
-  label.innerHTML = edit.value;
-}
-
-function clickHandler(item, edit) {
-  if(!(event.target.classList.contains('todo-item__input'))) {
-    refreshString(item, edit)
-  }
-}
-
-function handleKey(e) {
-  if ((e.keyCode == 13) && (document.activeElement == input)) {
-    let element = document.createElement('li');
-    element.classList.add('todo-item');
-    element.classList.add('todo-item_active');
-    let taskText = input.value;
-    let checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.classList.add('todo-item__check');
-    let label = document.createElement('label');
-    label.classList.add('todo-item__label');
-    label.innerHTML = taskText;
-    let div = document.createElement('div');
-    div.classList.add('todo-item__close');
-  
-    element.appendChild(checkbox);
-    element.appendChild(label);
-    element.appendChild(div);
-
-    addCheckHandler(element);
-
-    list.appendChild(element);
+      todoItem = document.getElementById(itemID);
     
-    input.value = '';
+      todoItemLabel = todoItem.querySelector('.todo-item__label');
+  
+      todoItem.classList.toggle(DOMtodo.todoItemDone);
+      todoItemLabel.classList.toggle(DOMtodo.todoItemLabelDone);
+    },
 
-    refreshCounter();
-  }
-}
+    selectAll: function(isSelectAll) {
+      if (isSelectAll === true) {
+        document.querySelector(DOMtodo.selectAll).classList.add(DOMtodo.selectAllChecked);
+      }
+      else {
+        document.querySelector(DOMtodo.selectAll).classList.remove(DOMtodo.selectAllChecked);
+      }
+    },
 
-function refreshCounter() {
-  let itemsActive = document.querySelectorAll('.todo-item_active');
-  counter.innerHTML = String(itemsActive.length) + " items left";
+    updateDisplayMode: function(isEmpty) {
+      if (isEmpty === true) {
+        document.querySelector(DOMtodo.selectAll).classList.remove(DOMtodo.selectAllVisible);
+        document.querySelector(DOMtodo.footer).classList.remove(DOMtodo.footerVisible);
+      }
+      else {
+        document.querySelector(DOMtodo.selectAll).classList.add(DOMtodo.selectAllVisible);
+        document.querySelector(DOMtodo.footer).classList.add(DOMtodo.footerVisible);
+      }
+    },
 
-  if(items.length > 0) {
-    selectAll.classList.add('select-all_visible');
-    footer.classList.add('hide_footer');
-  }
-  else {
-    selectAll.classList.remove('select-all_visible');
-    footer.classList.remove('hide_footer');
-  }
+    updateTodos: function(todos, mode) {
 
-  let itemsDone = document.querySelectorAll('.todo-item_done');
-  let buttonClearCompleted = document.querySelector('.js-button_clear-сompleted');
-  if(itemsDone.length > 0) {
-    buttonClearCompleted.classList.add('show_button_clear-сompleted');
-  }
-  else {
-    buttonClearCompleted.classList.remove('show_button_clear-сompleted');
-  }
-}
+      var list = document.querySelector(DOMtodo.todoList);
+      while (list.firstChild) {
+        list.removeChild(list.firstChild);
+      }
+      for (var i = 0; i < todos.length; i++) {
+        this.addListItem(todos[i]);
+      }
+    },
 
-function buttonAllHandler(buttonAll) {
-  if (!buttonAllCheckbox.checked) {
-    buttonAllCheckbox.checked = true;
-    buttonActiveCheckbox.checked = false;
-    buttonCompletedCheckbox.checked = false;
+    changeButtonMode: function(mode) {
+      if (mode === 'All') {
+        document.querySelector(DOMtodo.buttonAll).classList.add(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonActive).classList.remove(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonCompleted).classList.remove(DOMtodo.buttonSelected);
+      }
+      else if (mode === 'Active') {
+        document.querySelector(DOMtodo.buttonAll).classList.remove(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonActive).classList.add(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonCompleted).classList.remove(DOMtodo.buttonSelected);
+      }
+      else if (mode === 'Completed') {
+        document.querySelector(DOMtodo.buttonAll).classList.remove(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonActive).classList.remove(DOMtodo.buttonSelected);
+        document.querySelector(DOMtodo.buttonCompleted).classList.add(DOMtodo.buttonSelected);
+      }
+    },
 
-    buttonAll.classList.add('button_selected');
-    buttonActive.classList.remove('button_selected');
-    buttonCompleted.classList.remove('button_selected');
-  }
+    updateCounter: function(count) {
+      var counter = document.querySelector(DOMtodo.counter);
 
-  for(let i = 0; i < items.length; i++) {
-    items[i].classList.remove('todo-item_nodisplay');
-  }
-}
+      counter.innerHTML = String(count) + ' items left';
+    },
 
-function buttonActiveHandler(buttonActive) {
-  if (!buttonActiveCheckbox.checked) {
-    buttonAllCheckbox.checked = false;
-    buttonActiveCheckbox.checked = true;
-    buttonCompletedCheckbox.checked = false;
+    editItem: function(id) {
+      var todoItem, todoItemLabel, edit, todoItemClose;
 
-    buttonAll.classList.remove('button_selected');
-    buttonActive.classList.add('button_selected');
-    buttonCompleted.classList.remove('button_selected');
-  }
+      todoItem = document.getElementById(id);
+      todoItemLabel = todoItem.querySelector('.' + DOMtodo.todoItemLabel);
+      todoItemLabel.classList.add(DOMtodo.todoItemLabelEdited);
+      todoItemCheck = todoItem.querySelector('.' + DOMtodo.todoItemCheck);
+      todoItemCheck.classList.add(DOMtodo.todoItemCheckEdited);
+      todoItemClose = todoItem.querySelector('.' + DOMtodo.todoItemClose);
+      todoItemClose.classList.add(DOMtodo.todoItemCloseEdited);
+      todoItem.classList.add(DOMtodo.todoItemEdited);
+      edit = document.createElement('input');
+      edit.type = 'text';
+      edit.classList.add(DOMtodo.todoItemInput);
+      todoItem.appendChild(edit);
+      edit.value = todoItemLabel.innerHTML;
+      edit.focus();
+      
+      return [todoItem, edit];
+    },
 
-  allDoneItems = document.querySelectorAll('.todo-item_done');
- 
-  for (let i = 0; i < allDoneItems.length; i++) {
-    allDoneItems[i].classList.add('todo-item_nodisplay');
-  }
+    saveEdit: function(editItem, edit) {
+      label = editItem.querySelector('.' + DOMtodo.todoItemLabel);
+      label.classList.remove(DOMtodo.todoItemLabelEdited);
+      editItem.classList.remove(DOMtodo.todoItemEdited);
+      todoItemCheck = editItem.querySelector('.' + DOMtodo.todoItemCheck);
+      todoItemCheck.classList.remove(DOMtodo.todoItemCheckEdited);
+      closeElement = editItem.querySelector('.' + DOMtodo.todoItemClose);
+      closeElement.classList.remove(DOMtodo.todoItemCloseEdited);
+      edit.remove();
+      label.innerHTML = edit.value;
+    },
 
-  allActiveItems = document.querySelectorAll('.todo-item_active');
-  for (let i = 0; i < allActiveItems.length; i++) {
-    allActiveItems[i].classList.remove('todo-item_nodisplay');
-  }
-}
+    noSaveEdit: function(editItem, edit) {
+      label = editItem.querySelector('.' + DOMtodo.todoItemLabel);
+      label.classList.remove(DOMtodo.todoItemLabelEdited);
+      //editItem.querySelector('.todo-item_done');
+      editItem.classList.remove(DOMtodo.todoItemEdited);
+      todoItemCheck = editItem.querySelector('.' + DOMtodo.todoItemCheck);
+      todoItemCheck.classList.remove(DOMtodo.todoItemCheckEdited);
+      closeElement = editItem.querySelector('.' + DOMtodo.todoItemClose);
+      closeElement.classList.remove(DOMtodo.todoItemCloseEdited);
+      edit.remove();
+    },
 
-function buttonCompletedHandler(buttonCompleted) {
-  if (!buttonCompletedCheckbox.checked) {
-    buttonAllCheckbox.checked = false;
-    buttonActiveCheckbox.checked = false;
-    buttonCompletedCheckbox.checked = true;
+    visibleClose: function(id) {
+      var todoItem = document.getElementById(id);
 
-    buttonAll.classList.remove('button_selected');
-    buttonActive.classList.remove('button_selected');
-    buttonCompleted.classList.add('button_selected');
-  }
+      todoItem.querySelector('.' + DOMtodo.todoItemClose).classList.add('todo-item__close_visible');
+    },
 
-  allDoneItems = document.querySelectorAll('.todo-item_done');
+    hideClose: function() {
+      var allTodoItems = document.querySelectorAll('.todo-item');
 
-  for (let i = 0; i < allDoneItems.length; i++) {
-    allDoneItems[i].classList.remove('todo-item_nodisplay');
-  }
+      for ( var i = 0; i < allTodoItems.length; i++) {
+        allTodoItems[i].querySelector('.' + DOMtodo.todoItemClose).classList.remove('todo-item__close_visible');
+      }
+    }
+  };
+})();
 
-  allActiveItems = document.querySelectorAll('.todo-item_active');
-  for (let i = 0; i < allActiveItems.length; i++) {
-    allActiveItems[i].classList.add('todo-item_nodisplay');
-  } 
-}
+var controller = (function(todoController, todoUIController) {
+  var mode, DOMtodo, clkHandler, btnHandler;
+  
+  DOMtodo = todoUIController.getDOM();
+  
+  var setupEventListeners = function() {
+    var DOMtodo = todoUIController.getDOM();
+
+    document.addEventListener('keydown', function(event) {
+      if (event.keyCode === 13) {
+        addItem();
+      }
+    });
+
+    document.querySelector(DOMtodo.todoList).addEventListener('mouseover', handleMouseOver);
+    document.querySelector(DOMtodo.todoList).addEventListener('mouseout', handleMouseOut);
+
+    document.querySelector(DOMtodo.todoList).addEventListener('click', deleteItem);
+    document.querySelector(DOMtodo.todoList).addEventListener('click', changeState);
+    document.querySelector(DOMtodo.todoList).addEventListener('dblclick', editText);
+
+    document.querySelector(DOMtodo.selectAll).addEventListener('click', selectAllHandler);
+    document.querySelector(DOMtodo.buttonAll).addEventListener('click', buttonAllHandler);
+    document.querySelector(DOMtodo.buttonActive).addEventListener('click', buttonActiveHandler);
+    document.querySelector(DOMtodo.buttonCompleted).addEventListener('click', buttonCompletedHandler);
+    document.querySelector(DOMtodo.buttonClearCompleted).addEventListener('click', buttonClearCompletedHandler);
+   
+  };
+
+  var handleMouseOver = function() {
+    if (event.target.closest('.todo-item')) {
+      todoUIController.visibleClose(event.target.closest('.todo-item').id);
+    }
+  };
+
+  var handleMouseOut = function() {
+    todoUIController.hideClose();
+  };
+
+  var editText = function() {
+    var itemID, splitID, id, editItem, edit;
+
+    itemID = event.target.parentNode.id;
+    
+    if (event.target.classList.contains(DOMtodo.todoItemLabel)) {
+      splitID = itemID.split('-');
+      id = parseInt(splitID[1]);
+     
+      edited = todoUIController.editItem(itemID);
+      editItem = edited[0];
+      edit = edited[1];
+    
+      clkHandler = clickHandler.bind(null, editItem, edit, id);
+      btnHandler = buttonHandler.bind(null, editItem, edit, id);
+      window.addEventListener('click', clkHandler);
+      window.addEventListener('keydown', btnHandler);
+    }
+  };
+
+  var clickHandler = function(editItem, edit, id) {
+    if (!(event.target.classList.contains(DOMtodo.todoItemInput))) {
+      var text = edit.value;
+     
+      todoUIController.saveEdit(editItem, edit);
+      todoController.changeText(id, text);
+      
+      window.removeEventListener('click', clkHandler);
+      window.removeEventListener('keydown', btnHandler);
+    }
+  };
+
+  var buttonHandler = function(editItem, edit, id) {
+    var text = edit.value;
+    
+    if ((event.keyCode === 13) && (document.activeElement === edit)) {
+      todoUIController.saveEdit(editItem, edit);
+      todoController.changeText(id, text);
+
+      window.removeEventListener('click', clkHandler);
+      window.removeEventListener('keydown', btnHandler);
+
+    } else if ((event.keyCode === 27) && (document.activeElement === edit)) {
+      todoUIController.noSaveEdit(editItem, edit);
+
+      window.removeEventListener('click', clkHandler);
+      window.removeEventListener('keydown', btnHandler);
+    }
+    
+  };
+
+  var updateCounter = function() {
+    var count;
+
+    count = todoController.updateCounter();
+    todoUIController.updateCounter(count);
+  };
+
+  var buttonClearCompletedHandler = function() {
+    var completed, itemID;
+
+    completed = todoController.selectCompletedTodos();
+
+    for (var i = 0; i < completed.length; i++) {
+      itemID = completed[i].id;
+      todoController.deleteItem(itemID);
+    }
+
+    updateList();
+  };
+
+  var updateList = function() {
+    var isSelectAll;
+
+    if (mode === 'All') {
+      todos = todoController.selectAllTodos();
+    } else if (mode === 'Active') {
+      todos = todoController.selectActiveTodos();
+    } else if (mode === 'Completed') {
+      todos = todoController.selectCompletedTodos();
+    }
+    
+    isSelectAll = todoController.checkSelectAll();
+    todoUIController.selectAll(isSelectAll);
+    todoUIController.updateTodos(todos, mode);
+    todoUIController.changeButtonMode(mode);
+    updateCounter();
+  };
+
+  var buttonCompletedHandler = function() {
+    mode = 'Completed';
+
+    updateList();
+  };
+
+  var buttonAllHandler = function() {
+    mode = 'All';
+
+    updateList();
+  };
+
+  var buttonActiveHandler = function() {
+    mode = 'Active';
+
+    updateList();
+  };
+
+  var displayMode = function() {
+    var isEmpty;
+
+    isEmpty = todoController.isEmpty();
+    todoUIController.updateDisplayMode(isEmpty);
+  };
+
+  var selectAllHandler = function() {
+    var isSelectAll;
+
+    isSelectAll = todoController.selectAll();
+    todoUIController.selectAll(isSelectAll);
+    updateList();
+
+  };
+
+  var addItem = function() {
+    var input, newItem;
+    
+    input = todoUIController.getInput();
+
+    if (input.text !== "") {
+      newItem = todoController.addItem(input.text);
+      todoUIController.clearInput();
+
+      todoController.changeSelectAll();
+      displayMode();
+      updateList();
+    }
+  };
+
+  var deleteItem = function(event) {
+    var itemID, splitID, id;
+
+    itemID = event.target.parentNode.id;
+    
+    if (event.target.classList.contains(DOMtodo.todoItemClose)) {
+      splitID = itemID.split('-');
+      id = parseInt(splitID[1]);
+
+      todoController.deleteItem(id);
+      todoUIController.deleteListItem(itemID);
+
+      displayMode();
+      updateList();
+    }
+  };
+
+  var changeState = function(event) {
+    var itemID, splitID, id;
+
+    itemID = event.target.parentNode.id;
+
+    if (event.target.classList.contains(DOMtodo.todoItemCheck)) {
+      splitID = itemID.split('-');
+      id = parseInt(splitID[1]);
+
+      todoController.changeState(id);
+      todoController.changeSelectAll();
+      todoUIController.changeState(itemID);
+
+      updateList();
+    }
+  };
+
+  var LoadData = function() {
+    mode = 'All';
+    todoController.LoadData();
+
+    updateList();
+    displayMode();
+  };
+
+  return {
+    init: function() {
+      LoadData();
+      setupEventListeners();
+      buttonAllHandler();
+    }
+  };
+
+})(todoController, todoUIController);
+
+controller.init();

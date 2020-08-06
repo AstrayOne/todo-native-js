@@ -185,10 +185,6 @@ input::placeholder {
   border-color: rgba(175, 47, 47, 0.2);
 }
 
-/* .todo-item_nodisplay {
-  display: none;
-} */
-
 .button_all {
   width: 15px;
   left: 180px;

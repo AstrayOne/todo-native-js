@@ -2,6 +2,8 @@ import * as todoController from './todoController.js';
 import * as todoUIController from './todoUIController.js';
 
 var mode, DOMtodo, clkHandler, btnHandler;
+const keyEsc = 27;
+const keyEnter = 13;
 
 init();
   
@@ -9,30 +11,30 @@ DOMtodo = todoUIController.getDOM();
   
 function setupEventListeners() {
   DOMtodo = todoUIController.getDOM();
-
+  
   document.addEventListener('keydown', function(event) {
-    if (event.keyCode === 13) {
+    if (event.keyCode === keyEnter) {
       addItem();
     }
   })
 
-  document.querySelector(DOMtodo.todoList).addEventListener('mouseover', handleMouseOver);
-  document.querySelector(DOMtodo.todoList).addEventListener('mouseout', handleMouseOut);
+  document.querySelector(`.${DOMtodo.todoList}`).addEventListener('mouseover', handleMouseOver);
+  document.querySelector(`.${DOMtodo.todoList}`).addEventListener('mouseout', handleMouseOut);
 
-  document.querySelector(DOMtodo.todoList).addEventListener('click', deleteItem);
-  document.querySelector(DOMtodo.todoList).addEventListener('click', changeState);
-  document.querySelector(DOMtodo.todoList).addEventListener('dblclick', editText);
+  document.querySelector(`.${DOMtodo.todoList}`).addEventListener('click', handleDeleteItemClick);
+  document.querySelector(`.${DOMtodo.todoList}`).addEventListener('click', handleChangeStateClick);
+  document.querySelector(`.${DOMtodo.todoList}`).addEventListener('dblclick', handleEditTextDbclick);
 
-  document.querySelector(DOMtodo.selectAll).addEventListener('click', selectAllHandler);
-  document.querySelector(DOMtodo.buttonAll).addEventListener('click', buttonAllHandler);
-  document.querySelector(DOMtodo.buttonActive).addEventListener('click', buttonActiveHandler);
-  document.querySelector(DOMtodo.buttonCompleted).addEventListener('click', buttonCompletedHandler);
-  document.querySelector(DOMtodo.buttonClearCompleted).addEventListener('click', buttonClearCompletedHandler);
+  document.querySelector(`.${DOMtodo.selectAll}`).addEventListener('click', handleSelectAllClick);
+  document.querySelector(`.${DOMtodo.buttonAll}`).addEventListener('click', handleButtonAllClick);
+  document.querySelector(`.${DOMtodo.buttonActive}`).addEventListener('click', handleButtonActiveClick);
+  document.querySelector(`.${DOMtodo.buttonCompleted}`).addEventListener('click', handleButtonCompletedClick);
+  document.querySelector(`.${DOMtodo.buttonClearCompleted}`).addEventListener('click', handleClearCompletedClick);
 }
 
 function handleMouseOver() {
-  if (event.target.closest('.todo-item')) {
-    todoUIController.visibleClose(event.target.closest('.todo-item').id);
+  if (event.target.closest(`.${DOMtodo.todoItem}`)) {
+    todoUIController.visibleClose(event.target.closest(`.${DOMtodo.todoItem}`).id);
   }
 }
 
@@ -40,12 +42,12 @@ function handleMouseOut() {
   todoUIController.hideClose();
 }
 
-function editText() {
+function handleEditTextDbclick() {
   var itemID, splitID, id, edited, editItem, edit;
 
   itemID = event.target.parentNode.id;
 
-  if (event.target.classList.contains(DOMtodo.todoItemLabel)) {
+  if (event.target.classList.contains(`${DOMtodo.todoItemLabel}`)) {
     splitID = itemID.split('-');
     id = parseInt(splitID[1]);
     
@@ -53,17 +55,17 @@ function editText() {
     editItem = edited[0];
     edit = edited[1];
 
-    clkHandler = clickHandler.bind(null, editItem, edit, id);
-    btnHandler = buttonHandler.bind(null, editItem, edit, id);
+    clkHandler = handlerNoEditClick.bind(null, editItem, edit, id);
+    btnHandler = handlerNoEditButton.bind(null, editItem, edit, id);
     window.addEventListener('click', clkHandler);
     window.addEventListener('keydown', btnHandler);
   }
 }
 
-function clickHandler(editItem, edit, id) {
+function handlerNoEditClick(editItem, edit, id) {
   var text;
 
-  if (!(event.target.classList.contains(DOMtodo.todoItemInput))) {
+  if (!(event.target.classList.contains(`${DOMtodo.todoItemInput}`))) {
     text = edit.value;
      
     todoUIController.saveEdit(editItem, edit);
@@ -74,17 +76,18 @@ function clickHandler(editItem, edit, id) {
   }
 }
 
-function buttonHandler(editItem, edit, id) {
-  var text = edit.value;
+function handlerNoEditButton(editItem, edit, id) {
+  var text;
+  text = edit.value;
     
-  if ((event.keyCode === 13) && (document.activeElement === edit)) {
+  if ((event.keyCode === keyEnter) && (document.activeElement === edit)) {
     todoUIController.saveEdit(editItem, edit);
     todoController.changeText(id, text);
 
     window.removeEventListener('click', clkHandler);
     window.removeEventListener('keydown', btnHandler);
 
-  } else if ((event.keyCode === 27) && (document.activeElement === edit)) {
+  } else if ((event.keyCode === keyEsc) && (document.activeElement === edit)) {
     todoUIController.noSaveEdit(editItem, edit);
 
     window.removeEventListener('click', clkHandler);
@@ -99,7 +102,7 @@ function updateCounter() {
   todoUIController.updateCounter(count);
 }
 
-function buttonClearCompletedHandler() {
+function handleClearCompletedClick() {
   var completed, itemID;
 
   completed = todoController.selectCompletedTodos();
@@ -110,6 +113,7 @@ function buttonClearCompletedHandler() {
   }
 
   updateList();
+  displayMode();
 }
 
 function updateList() {
@@ -125,24 +129,24 @@ function updateList() {
     
   isSelectAll = todoController.checkSelectAll();
   todoUIController.selectAll(isSelectAll);
-  todoUIController.updateTodos(todos, mode);
+  todoUIController.updateTodos(todos);
   todoUIController.changeButtonMode(mode);
   updateCounter();
 }
 
-function buttonCompletedHandler() {
+function handleButtonCompletedClick() {
   mode = 'Completed';
 
   updateList();
 }
 
-function buttonAllHandler() {
+function handleButtonAllClick() {
   mode = 'All';
 
   updateList();
 }
 
-function buttonActiveHandler() {
+function handleButtonActiveClick() {
   mode = 'Active';
 
   updateList();
@@ -155,7 +159,7 @@ function displayMode() {
   todoUIController.updateDisplayMode(isEmpty);
 }
 
-function selectAllHandler() {
+function handleSelectAllClick() {
   var isSelectAll;
 
   isSelectAll = todoController.selectAll();
@@ -179,12 +183,12 @@ function addItem() {
   }
 }
 
-function deleteItem(event) {
+function handleDeleteItemClick(event) {
   var itemID, splitID, id;
 
   itemID = event.target.parentNode.id;
     
-  if (event.target.classList.contains(DOMtodo.todoItemClose)) {
+  if (event.target.classList.contains(`${DOMtodo.todoItemClose}`)) {
     splitID = itemID.split('-');
     id = parseInt(splitID[1]);
 
@@ -196,12 +200,12 @@ function deleteItem(event) {
   }
 }
 
-function changeState(event) {
+function handleChangeStateClick(event) {
   var itemID, splitID, id;
 
   itemID = event.target.parentNode.id;
 
-  if (event.target.classList.contains(DOMtodo.todoItemCheck)) {
+  if (event.target.classList.contains(`${DOMtodo.todoItemCheck}`)) {
     splitID = itemID.split('-');
     id = parseInt(splitID[1]);
 
@@ -224,6 +228,6 @@ function LoadData() {
 function init() {
   LoadData();
   setupEventListeners();
-  buttonAllHandler();
+  handleButtonAllClick();
 }
 
